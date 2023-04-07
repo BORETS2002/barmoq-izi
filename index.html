@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Fingerprint Authentication</title>
+  </head>
+  <body>
+    <button id="fingerprint-button">Authenticate with Fingerprint</button>
+    <script>
+      const fingerprintOptions = {
+        publicKey: {
+          timeout: 60000,
+          challenge: new Uint8Array([
+            /* your random challenge data goes here */
+          ]),
+          allowCredentials: [
+            {
+              type: "public-key",
+              id: new Uint8Array(16),
+              transports: ["usb", "nfc", "ble"],
+            },
+          ],
+        },
+      };
+      const fingerprintButton = document.getElementById("fingerprint-button");
+      fingerprintButton.addEventListener("click", () => {
+        navigator.credentials
+          .get(fingerprintOptions)
+          .then((assertion) => {
+            const publicKeyData = assertion.response.clientDataJSON;
+            const credential = assertion.rawId;
+            const signature = assertion.response.signature;
+            fetch("/auth", {
+              method: "POST",
+              body: JSON.stringify({
+                publicKeyData,
+                credential,
+                signature,
+              }),
+              headers: {
+                "Content-type": "application/json",
+              },
+            }).then((response) => {
+              // handle the response from the backend server
+            });
+          })
+          .catch((err) => {
+            console.error(err);
+          });
+      });
+    </script>
+  </body>
+</html>
